@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "cockroachdb"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id       String @id @default(uuid())
+  userId   String @unique
+  name     String
+  imageUrl String
+  email    String
+
+  createdAt  DateTime @default(now())
+  upadatedAt DateTime @updatedAt
+
+  servers Server[]
+  members Member[]
+  Channel Channel[]
+}
+
+model Server {
+  id         String    @id @default(uuid())
+  name       String
+  imageUrl   String
+  invitecode String
+  profileId  String
+  profile    Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  members    Member[]
+  channels   Channel[]
+  createdAt  DateTime  @default(now())
+  upadatedAt DateTime  @updatedAt
+
+  @@index([profileId])
+}
+
+enum MemberRole {
+  ADMIN
+  MODERATOR
+  GUEST
+}
+
+model Member {
+  id         String     @id @default(uuid())
+  roleName   String
+  role       MemberRole @default(GUEST)
+  profileId  String
+  profile    Profile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt  DateTime   @default(now())
+  upadatedAt DateTime   @updatedAt
+  serverId   String
+  server     Server     @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@index([serverId])
+  @@index([profileId])
+}
+
+enum ChannelType {
+  TEXT
+  AUDIO
+  VIDEO
+}
+
+model Channel {
+  id        String      @id @default(uuid())
+  name      String
+  type      ChannelType @default(TEXT)
+  profileId String
+  profile   Profile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  serverId  String
+  server    Server      @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  createdAt  DateTime   @default(now())
+  upadatedAt DateTime   @updatedAt
+
+  @@index([serverId])
+  @@index([profileId])
+}
